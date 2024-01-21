@@ -1,10 +1,20 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { createCustomer } from "./customerSlice";
 
 function Customer() {
   const [fullName, setFullName] = useState("");
   const [nationalId, setNationalId] = useState("");
 
-  function handleClick() {}
+  //here, we want to dispatch an action from the redux store. we get access to dispatch function using "useDispatch" hook
+  const dispatch = useDispatch();
+
+  //the createCustomer is coming from the actioj creatore in the customers slice
+  function handleClick() {
+    if (!fullName || !nationalId) return;
+
+    dispatch(createCustomer(fullName, nationalId));
+  }
 
   return (
     <div>
