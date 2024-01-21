@@ -3,12 +3,17 @@ const initialStateAccount = {
   balance: 0,
   loan: 0,
   loanPurpose: "",
+  isLoading: false,
 };
 
 export default function accountReducer(state = initialStateAccount, action) {
   switch (action.type) {
     case "account/deposit":
-      return { ...state, balance: state.balance + action.payload };
+      return {
+        ...state,
+        balance: state.balance + action.payload,
+        isLoading: false,
+      };
 
     case "account/withdraw":
       return { ...state, balance: state.balance - action.payload };
@@ -29,14 +34,41 @@ export default function accountReducer(state = initialStateAccount, action) {
         loanPurpose: "",
         balance: state.balance - state.loan,
       };
+    case "account/convertingCurrency":
+      return { ...state, isLoading: true };
 
     default:
       return state;
   }
 }
 
-export function deposit(amount) {
-  return { type: "account/deposit", payload: amount };
+//coming here from the store, we dispatch the currency ..then head to the acountcreation.js while where we dispatch the deposit
+export function deposit(amount, currency) {
+  if (currency === "USD") {
+    return { type: "account/deposit", payload: amount };
+  }
+
+  return async function (dispatch, getState) {
+    dispatch({ type: "account/convertingCurrency" });
+    try {
+      //so here we make the api call from frankfurter api based on the condition above
+      const res = await fetch(
+        `https://api.frankfurter.app/latest?amount=${amount}&from=${currency}&to=USD`
+      );
+
+      const data = await res.json();
+      const converted = data.rates.USD;
+      console.log("converted", converted);
+
+      //so after making the api call we then return the action
+      dispatch({
+        type: "account/deposit",
+        payload: converted,
+      });
+    } catch (error) {
+      console.error("Error making API call:", error);
+    }
+  };
 }
 
 export function withdraw(amount) {
